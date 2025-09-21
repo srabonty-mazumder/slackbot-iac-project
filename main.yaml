@@ -1,5 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "Task 1 - Networking for Slack Chatbot (Project: slackbot, Student: srabonty)"
+Description: |
+  Task 1 - Networking for Slack Chatbot
+  Project: slackbot
+  Student: srabonty
 
 Resources:
   VPC:
@@ -67,4 +70,5 @@ Resources:
       Tags:
         - Key: Name
           Value: slackbot-t1-private-az2-srabonty
+
 
