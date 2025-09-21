@@ -1,8 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Task 1 - Networking for Slack Chatbot (Project: slackbot, Student: srabonty)
+Description: "Task 1 - Networking for Slack Chatbot (Project: slackbot, Student: srabonty)"
 
 Resources:
-  # Virtual Private Cloud
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -20,7 +19,7 @@ Resources:
           Value: srabonty
         - Key: DeploymentType
           Value: Sandbox
-
+         
   # Public Subnet AZ1
   PublicSubnetAZ1:
     Type: AWS::EC2::Subnet
@@ -68,3 +67,4 @@ Resources:
       Tags:
         - Key: Name
           Value: slackbot-t1-private-az2-srabonty
+
