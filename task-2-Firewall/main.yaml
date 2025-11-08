@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Task 2 - Firewall for Slack Chatbot (Project: slackbot, Student: srabonty)
+Description: >
+  Task 2 - Firewall for Slack Chatbot (Project: slackbot, Student: srabonty)
+  Networking security groups for Slack bot deployment environment.
 
 Parameters:
   ProjectName:
