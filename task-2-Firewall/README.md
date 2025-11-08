@@ -16,5 +16,6 @@ This task extends Task 1 by adding firewall rules (Security Groups).
 ## Notes
 - Public SG is used for resources exposed to the internet (e.g., API gateway/bastion)
 - Private SG is for internal services (Lambda/database)
-- Follows the least-privilege access model
-- Parameters allow reuse later in the project
+- There are 2 images in the  Task 2 folder that show a screenshot of: 
+   - Public Security Group: allows 22, 80, 443 from the Internet
+   - Private Security Group: allows 22, 80, 443 only from Public SG
