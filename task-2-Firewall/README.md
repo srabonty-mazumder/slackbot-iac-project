@@ -10,8 +10,8 @@ This task extends Task 1 by adding firewall rules (Security Groups).
 1. Go to AWS Academy Sandbox → CloudFormation
 2. Create Stack → With new resources
 3. Upload `main.yaml`
-4. Click Next → Next → Create Stack
-5. Wait until status = CREATE_COMPLETE
+4. Click Next → Next → submit
+5. Wait until status CREATE_COMPLETE
 
 ## Notes
 - Public SG is used for resources exposed to the internet (e.g., API gateway/bastion)
