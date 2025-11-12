@@ -32,6 +32,7 @@ curl http://169.254.169.254/latest/meta-data/
 
 ### 6. Screenshot
 Include screenshot of metadata output here:
+<img width="860" height="463" alt="Image" src="https://github.com/user-attachments/assets/896d1628-9ffd-47fd-87ca-f1c4f8d93618" />
 
 
 
