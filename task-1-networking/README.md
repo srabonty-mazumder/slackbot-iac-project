@@ -33,4 +33,5 @@ Example: `slackbot-t1-public-az1-srabonty`
 - Public subnets are for Slack API endpoints.  
 - Private subnets are for backend services (Lambda, databases).  
 - AZ1 and AZ2 ensure high availability.
+- Screenshot of my deployment in the ASW sandbox: <img width="835" height="401" alt="Image" src="https://github.com/user-attachments/assets/b371425d-f16f-4851-b20a-345e0412d123" />
 
