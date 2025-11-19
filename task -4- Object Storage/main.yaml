@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Task 4 - Object Storage (S3) for Slackbot Project | Student: srabonty
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: slackbot
+  StudentName:
+    Type: String
+    Default: srabonty
+  Environment:
+    Type: String
+    Default: sandbox
+
+Resources:
+  # Public bucket
+  PublicBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-public-${StudentName}-${AWS::AccountId}"
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task4
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+  # Protected (private) bucket
+  ProtectedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-protected-${StudentName}-${AWS::AccountId}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-protected-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task4
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+Outputs:
+  PublicBucketName:
+    Description: Public S3 bucket name
+    Value: !Ref PublicBucket
+  ProtectedBucketName:
+    Description: Protected S3 bucket name
+    Value: !Ref ProtectedBucket
