@@ -46,3 +46,6 @@ upload: ./private-test.txt to s3://slackbot-protected-srabonty-471112751828/priv
 ~ $ aws s3 ls s3://slackbot-protected-srabonty-471112751828/
 2025-11-19 16:54:45         28 private-test.txt
 
+## Screenshots about Public and Protected containers with test files to task README.txt
+
+
