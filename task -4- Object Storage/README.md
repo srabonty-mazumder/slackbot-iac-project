@@ -48,4 +48,7 @@ upload: ./private-test.txt to s3://slackbot-protected-srabonty-471112751828/priv
 
 ## Screenshots about Public and Protected containers with test files to task README.txt
 
+<img width="958" height="277" alt="Image" src="https://github.com/user-attachments/assets/7f5cf2f4-7f04-4adb-8448-d8cba9ba736f" />
+
+<img width="958" height="287" alt="Image" src="https://github.com/user-attachments/assets/077c3418-0a16-4248-ae19-e40660d80c82" />
 
