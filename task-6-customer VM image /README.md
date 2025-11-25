@@ -7,12 +7,19 @@ Write below command to create an SSH key:
 ssh-keygen -t rsa -b 2048 -f slackbot-key-srabonty
 Upload public key to AWS → EC2 → Key Pairs → Import
 
-### 2. Deploy Stack
-AWS → CloudFormation → Create Stack
-Upload `main.yaml.`
-Stack Name: slackbot-task3-srabonty
-
-Wait for WORK_IN_PROCESS to CREATE_COMPLETE.
+### 2. Launch a NEW VM (Task 6 Base VM)
+EC2 → Launch Instance
+Name → task6-base-vm
+AMI → Amazon Linux 2
+Instance type → t2.micro
+Key Pair → SELECT the new one: slackbot-key-srabonty
+Network:
+default VPC
+public subnet
+public IP enabled
+Security group:
+SSH (22) from 0.0.0.0/0
+HTTP (80) from 0.0.0.0/0
 
 ### 3. Get Public IP
 CloudFormation → Outputs → VMPublicIP 
