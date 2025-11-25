@@ -33,6 +33,8 @@ echo "<h1>Hello from slackbot custom VM image</h1>" | sudo tee /var/www/html/ind
 
 ## 4. Test HTTP Access
 Open browser: http://54.144.111.105/
+<img width="806" height="322" alt="Image" src="https://github.com/user-attachments/assets/15b919df-7664-4996-899c-e57e47687f11" />
+
 
 ### 5. Create a Custom AMI
 
@@ -43,5 +45,9 @@ Image name: slackbot-custom-image-srabonty
 Submit and wait
 Go to EC2 → AMIs
 Confirm status = Available
+Screenshot of practice: 
+<img width="956" height="167" alt="Image" src="https://github.com/user-attachments/assets/4d852cf7-58d6-4a14-9580-762b9a179e8f" />
+
 
 ## 6. Attempt to Launch a VM from Custom AMI (Sandbox Restriction)
+<img width="952" height="382" alt="Image" src="https://github.com/user-attachments/assets/7bd510ae-d3e0-4bd1-990b-bd49ececf9a5" />
