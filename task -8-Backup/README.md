@@ -29,6 +29,9 @@ Select my Task 7 VM
 Click Actions → Image and templates → Create Snapshot
 Name: task8-backup-snapshot-srabonty
 
+Screenshot of my practical implementation: 
+<img width="957" height="416" alt="Image" src="https://github.com/user-attachments/assets/166345af-adda-4740-b1e1-5f086d56e2f2" />
+
 ### STEP 6 — Test Restore Procedure
 Go to EC2 → Snapshots
 Select my snapshot
