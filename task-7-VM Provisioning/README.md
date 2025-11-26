@@ -40,11 +40,6 @@ EC2Instance:
         systemctl enable httpd
         systemctl start httpd
         echo "<h1>Hello from automated Apache install (Task 7)</h1>" > /var/www/html/index.html
-## This script automatically:
-Installs Apache
-Enables and starts the service
-Creates /var/www/html/index.html
-Confirms automation worked
 
 ## Deploy Updated CloudFormation Template
 Go to AWS → CloudFormation → Create Stack
