@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Task 9 - NAT Gateway Setup with Private EC2 (Student: srabonty)
+Description: >
+  Task 9 - NAT Gateway Setup with Private EC2
+  Student: srabonty
 
 Parameters:
   ProjectName:
@@ -14,7 +16,6 @@ Parameters:
 
 Resources:
 
-  # ------------------ VPC ------------------
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -23,7 +24,6 @@ Resources:
         - Key: Name
           Value: !Sub "${ProjectName}-vpc-${StudentName}"
 
-  # ------------------ Subnets ------------------
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -46,7 +46,6 @@ Resources:
         - Key: Name
           Value: !Sub "${ProjectName}-private-${StudentName}"
 
-  # ------------------ Internet Gateway ------------------
   IGW:
     Type: AWS::EC2::InternetGateway
 
@@ -56,7 +55,6 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref IGW
 
-  # ------------------ Public Route Table ------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -75,7 +73,6 @@ Resources:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PublicRouteTable
 
-  # ------------------ NAT Gateway ------------------
   EIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -87,7 +84,6 @@ Resources:
       AllocationId: !GetAtt EIP.AllocationId
       SubnetId: !Ref PublicSubnet
 
-  # ------------------ Private Route Table ------------------
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -106,7 +102,6 @@ Resources:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
 
-  # ------------------ Security Group ------------------
   PrivateSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -121,7 +116,6 @@ Resources:
         - Key: Name
           Value: !Sub "${ProjectName}-private-sg-${StudentName}"
 
-  # ------------------ EC2 Instance in Private Subnet ------------------
   PrivateEC2:
     Type: AWS::EC2::Instance
     Properties:
@@ -146,7 +140,8 @@ Resources:
 Outputs:
   PrivateEC2ID:
     Value: !Ref PrivateEC2
-  PrivateSubnet:
+  PrivateSubnetID:
     Value: !Ref PrivateSubnet
   NATGatewayID:
     Value: !Ref NATGateway
+
