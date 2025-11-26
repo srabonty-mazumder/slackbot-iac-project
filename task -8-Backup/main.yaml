@@ -18,16 +18,12 @@ Parameters:
 Resources:
 
   # ----------------------------------------------------
-  # Backup Vault
+  # Backup Vault (NO TAGS - FIXED)
   # ----------------------------------------------------
   BackupVault:
     Type: AWS::Backup::BackupVault
     Properties:
       BackupVaultName: !Sub "${ProjectName}-${StudentName}-vault"
-      Tags:
-        Project: !Ref ProjectName
-        Student: !Ref StudentName
-        Task: "Task8"
 
   # ----------------------------------------------------
   # IAM Role for AWS Backup Service
@@ -46,11 +42,6 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
         - arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForRestores
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Student
-          Value: !Ref StudentName
 
   # ----------------------------------------------------
   # Backup Plan (Daily backup + lifecycle rules)
@@ -65,7 +56,7 @@ Resources:
             TargetBackupVault: !Ref BackupVault
             ScheduleExpression: !Ref BackupPlanSchedule
             Lifecycle:
-              DeleteAfterDays: 30   # Lifecycle: delete after 30 days
+              DeleteAfterDays: 30
               MoveToColdStorageAfterDays: 7
             RecoveryPointTags:
               Student: !Ref StudentName
@@ -82,8 +73,6 @@ Resources:
       BackupSelection:
         SelectionName: !Sub "${ProjectName}-${StudentName}-selection"
         IamRoleArn: !GetAtt BackupRole.Arn
-        Resources:
-          - !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
         ListOfTags:
           - ConditionType: STRINGEQUALS
             ConditionKey: Backup
@@ -92,12 +81,9 @@ Resources:
 Outputs:
   BackupVaultName:
     Value: !Ref BackupVault
-    Description: Backup vault created
-
   BackupPlanID:
     Value: !Ref BackupPlan
-    Description: Backup plan created
-
   IAMRoleArn:
     Value: !GetAtt BackupRole.Arn
-    Description: IAM Role used by AWS Backup
+
+
