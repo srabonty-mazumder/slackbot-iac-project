@@ -22,6 +22,7 @@ echo "<h1>Hello from Task 7 Manual Install</h1>" | sudo tee /var/www/html/index.
 ### Screenshot: <img width="604" height="314" alt="Image" src="https://github.com/user-attachments/assets/53bfc5e9-80a5-4c72-b11d-2875780fe52f" />
 
 ### Step 2: The goal is to ensure the VM configures itself automatically without manual SSH installation.
+
 Updated EC2Instance block in main.yaml 
 EC2Instance:
   Type: AWS::EC2::Instance
