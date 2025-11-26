@@ -1,3 +1,10 @@
+### Task 7 
+The goal of Task 7 is to automate the installation of an application (Apache web server) on a VM using CloudFormation UserData, instead of installing it manually.
+
+This builds on Task 6, where Apache was installed manually on a VM to verify that the commands work correctly.
+
+In Task 7, the same installation commands are embedded inside the CloudFormation EC2Instance UserData script, so the VM configures itself on first boot.
+
 ## Step 1 completed earlier (from Task 6):
 
 Launched a VM using Amazon Linux 2
