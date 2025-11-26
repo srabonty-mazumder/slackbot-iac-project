@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Task 8 - Backup and Restore (Sandbox-Compatible IaC Template)
+  This template stores backup metadata because automated backups
+  are blocked in AWS Academy Sandbox (IAM restricted).
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: slackbot
+  StudentName:
+    Type: String
+    Default: srabonty
+  BackupTag:
+    Type: String
+    Default: RetainDays
+  RetentionDays:
+    Type: String
+    Default: "7"
+
+Resources:
+  BackupMetaData:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${ProjectName}/${StudentName}/task8-backup-info"
+      Type: String
+      Value: !Sub "Backup snapshot created manually. Lifecycle tag ${BackupTag}=${RetentionDays} applied."
+
+Outputs:
+  Info:
+    Description: Notes for student
+    Value: "Snapshots and lifecycle rules created manually due to sandbox restrictions."
