@@ -1,88 +1,32 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: Task 3 - Create VPC, Public Subnet, Internet Gateway, Route Table, EC2 Instance
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  "Task 3 - VM Deployment for Slackbot (Student: srabonty)"
 
 Parameters:
-
+  ProjectName:
+    Type: String
+    Default: slackbot
+  StudentName:
+    Type: String
+    Default: srabonty
+  Environment:
+    Type: String
+    Default: sandbox
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Existing key pair for SSH access
-
-  InstanceType:
-    Type: String
-    Default: t2.micro
-
-  VpcCIDR:
-    Type: String
-    Default: 10.0.0.0/16
-
-  PublicSubnetCIDR:
-    Type: String
-    Default: 10.0.1.0/24
-
+    Default: slackbot-key-srabonty
 
 Resources:
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref VpcCIDR
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
+      CidrBlock: 10.0.0.0/16
       Tags:
         - Key: Name
-          Value: Task3-VPC
-
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: Task3-IGW
-
-  VPCGWAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
-
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Ref PublicSubnetCIDR
-      MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: Task3-Public-Subnet
-
-  PublicRT:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: Task3-Public-RT
-
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: VPCGWAttachment
-    Properties:
-      RouteTableId: !Ref PublicRT
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  PublicSubnetAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRT
-
-  PublicSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow SSH
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort:
+          Value: !Sub "${ProjectName}-vpc-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task3
