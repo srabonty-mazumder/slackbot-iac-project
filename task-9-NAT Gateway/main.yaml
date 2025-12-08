@@ -1,26 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: >
-  Task 3 - Create VPC, Public Subnet, Internet Access, and Public EC2 Instance.
-  Template is parameterized to allow reuse for later tasks (Task 9).
+Description: Task 3 - Create VPC, Public Subnet, Internet Gateway, Route Table, EC2 Instance
 
-# ------------------------------
-# PARAMETERS
-# ------------------------------
 Parameters:
 
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of an existing EC2 Key Pair to allow SSH access
-    ConstraintDescription: Must be a valid keypair name.
+    Description: Existing key pair for SSH access
 
   InstanceType:
     Type: String
     Default: t2.micro
-    AllowedValues:
-      - t2.micro
-      - t3.micro
-      - t3.small
-    Description: EC2 instance size
 
   VpcCIDR:
     Type: String
@@ -30,129 +19,70 @@ Parameters:
     Type: String
     Default: 10.0.1.0/24
 
-# ------------------------------
-# RESOURCES
-# ------------------------------
 
-# ---- VPC ----
-VPC:
-  Type: AWS::EC2::VPC
-  Properties:
-    CidrBlock: !Ref VpcCIDR
-    EnableDnsSupport: true
-    EnableDnsHostnames: true
-    Tags:
-      - Key: Name
-        Value: Task3-VPC
+Resources:
 
-# ---- Internet Gateway ----
-InternetGateway:
-  Type: AWS::EC2::InternetGateway
-  Properties:
-    Tags:
-      - Key: Name
-        Value: Task3-IGW
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Task3-VPC
 
-AttachGateway:
-  Type: AWS::EC2::VPCGatewayAttachment
-  Properties:
-    VpcId: !Ref VPC
-    InternetGatewayId: !Ref InternetGateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Task3-IGW
 
-# ---- Public Subnet ----
-PublicSubnet:
-  Type: AWS::EC2::Subnet
-  Properties:
-    VpcId: !Ref VPC
-    CidrBlock: !Ref PublicSubnetCIDR
-    MapPublicIpOnLaunch: true
-    AvailabilityZone: !Select [0, !GetAZs ""]
-    Tags:
-      - Key: Name
-        Value: Task3-Public-Subnet
+  VPCGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
 
-# ---- Public Route Table ----
-PublicRouteTable:
-  Type: AWS::EC2::RouteTable
-  Properties:
-    VpcId: !Ref VPC
-    Tags:
-      - Key: Name
-        Value: Task3-Public-RT
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: Task3-Public-Subnet
 
-PublicRoute:
-  Type: AWS::EC2::Route
-  DependsOn: AttachGateway
-  Properties:
-    RouteTableId: !Ref PublicRouteTable
-    DestinationCidrBlock: 0.0.0.0/0
-    GatewayId: !Ref InternetGateway
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Task3-Public-RT
 
-SubnetRouteTableAssociation:
-  Type: AWS::EC2::SubnetRouteTableAssociation
-  Properties:
-    SubnetId: !Ref PublicSubnet
-    RouteTableId: !Ref PublicRouteTable
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
 
-# ---- Security Group for Public EC2 ----
-PublicEC2SG:
-  Type: AWS::EC2::SecurityGroup
-  Properties:
-    GroupDescription: Allow SSH from anywhere (can be restricted)
-    VpcId: !Ref VPC
-    SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: 0.0.0.0/0   # For testing. Restrict later.
-    Tags:
-      - Key: Name
-        Value: Task3-EC2-SG
+  PublicSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRT
 
-# ---- EC2 Instance in Public Subnet ----
-PublicInstance:
-  Type: AWS::EC2::Instance
-  Properties:
-    InstanceType: !Ref InstanceType
-    KeyName: !Ref KeyPairName
-    ImageId: ami-0c2af51e265bd5e0e    # Amazon Linux 2023 (Region dependent)
-    NetworkInterfaces:
-      - AssociatePublicIpAddress: true
-        DeviceIndex: 0
-        SubnetId: !Ref PublicSubnet
-        GroupSet:
-          - !Ref PublicEC2SG
-    Tags:
-      - Key: Name
-        Value: Task3-Public-EC2
-      - Key: Course
-        Value: CloudComputing
-      - Key: Task
-        Value: Task3
-      - Key: Student
-        Value: Srabonty
-
-    # User Data example: read metadata & install curl
-    UserData:
-      Fn::Base64: !Sub |
-        #!/bin/bash
-        yum install -y curl
-        echo "Metadata Test" > /home/ec2-user/metadata.txt
-        curl http://169.254.169.254/latest/meta-data/ >> /home/ec2-user/metadata.txt
-
-# ------------------------------
-# OUTPUTS
-# ------------------------------
-Outputs:
-
-  PublicInstanceIP:
-    Description: Public IP of the EC2 instance
-    Value: !GetAtt PublicInstance.PublicIp
-
-  VPCID:
-    Description: VPC ID
-    Value: !Ref VPC
-
-  PublicSubnetID:
-    Description: Public Subnet ID
-    Value: !Ref PublicSubnet
+  PublicSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort:
