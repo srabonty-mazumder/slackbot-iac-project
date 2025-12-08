@@ -1,159 +1,158 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Task 9 - NAT Gateway Setup with Private EC2
-  Student: srabonty
+  Task 3 - Create VPC, Public Subnet, Internet Access, and Public EC2 Instance.
+  Template is parameterized to allow reuse for later tasks (Task 9).
 
+# ------------------------------
+# PARAMETERS
+# ------------------------------
 Parameters:
-  ProjectName:
-    Type: String
-    Default: slackbot
-  StudentName:
-    Type: String
-    Default: srabonty
+
   KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 Key Pair to allow SSH access
+    ConstraintDescription: Must be a valid keypair name.
+
+  InstanceType:
     Type: String
-    Default: slackbot-key-srabonty
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+    Description: EC2 instance size
 
-Resources:
+  VpcCIDR:
+    Type: String
+    Default: 10.0.0.0/16
 
-  # VPC
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-vpc-${StudentName}"
+  PublicSubnetCIDR:
+    Type: String
+    Default: 10.0.1.0/24
 
-  # Public Subnet
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-public-${StudentName}"
+# ------------------------------
+# RESOURCES
+# ------------------------------
 
-  # Private Subnet
-  PrivateSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: false
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-private-${StudentName}"
+# ---- VPC ----
+VPC:
+  Type: AWS::EC2::VPC
+  Properties:
+    CidrBlock: !Ref VpcCIDR
+    EnableDnsSupport: true
+    EnableDnsHostnames: true
+    Tags:
+      - Key: Name
+        Value: Task3-VPC
 
-  # Internet Gateway
-  IGW:
-    Type: AWS::EC2::InternetGateway
+# ---- Internet Gateway ----
+InternetGateway:
+  Type: AWS::EC2::InternetGateway
+  Properties:
+    Tags:
+      - Key: Name
+        Value: Task3-IGW
 
-  AttachIGW:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref IGW
+AttachGateway:
+  Type: AWS::EC2::VPCGatewayAttachment
+  Properties:
+    VpcId: !Ref VPC
+    InternetGatewayId: !Ref InternetGateway
 
-  # Public Route Table
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
+# ---- Public Subnet ----
+PublicSubnet:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref VPC
+    CidrBlock: !Ref PublicSubnetCIDR
+    MapPublicIpOnLaunch: true
+    AvailabilityZone: !Select [0, !GetAZs ""]
+    Tags:
+      - Key: Name
+        Value: Task3-Public-Subnet
 
-  PublicRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref IGW
+# ---- Public Route Table ----
+PublicRouteTable:
+  Type: AWS::EC2::RouteTable
+  Properties:
+    VpcId: !Ref VPC
+    Tags:
+      - Key: Name
+        Value: Task3-Public-RT
 
-  PublicSubnetRouteTableAssoc:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
+PublicRoute:
+  Type: AWS::EC2::Route
+  DependsOn: AttachGateway
+  Properties:
+    RouteTableId: !Ref PublicRouteTable
+    DestinationCidrBlock: 0.0.0.0/0
+    GatewayId: !Ref InternetGateway
 
-  # EIP for NAT
-  EIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
+SubnetRouteTableAssociation:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId: !Ref PublicSubnet
+    RouteTableId: !Ref PublicRouteTable
 
-  # NAT Gateway in Public Subnet
-  NATGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt EIP.AllocationId
-      SubnetId: !Ref PublicSubnet
+# ---- Security Group for Public EC2 ----
+PublicEC2SG:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Allow SSH from anywhere (can be restricted)
+    VpcId: !Ref VPC
+    SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0   # For testing. Restrict later.
+    Tags:
+      - Key: Name
+        Value: Task3-EC2-SG
 
-  # Private Route Table -> NAT
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
+# ---- EC2 Instance in Public Subnet ----
+PublicInstance:
+  Type: AWS::EC2::Instance
+  Properties:
+    InstanceType: !Ref InstanceType
+    KeyName: !Ref KeyPairName
+    ImageId: ami-0c2af51e265bd5e0e    # Amazon Linux 2023 (Region dependent)
+    NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        SubnetId: !Ref PublicSubnet
+        GroupSet:
+          - !Ref PublicEC2SG
+    Tags:
+      - Key: Name
+        Value: Task3-Public-EC2
+      - Key: Course
+        Value: CloudComputing
+      - Key: Task
+        Value: Task3
+      - Key: Student
+        Value: Srabonty
 
-  PrivateRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGateway
+    # User Data example: read metadata & install curl
+    UserData:
+      Fn::Base64: !Sub |
+        #!/bin/bash
+        yum install -y curl
+        echo "Metadata Test" > /home/ec2-user/metadata.txt
+        curl http://169.254.169.254/latest/meta-data/ >> /home/ec2-user/metadata.txt
 
-  PrivateSubnetAssoc:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PrivateRouteTable
-
-  # Security Group for Private EC2
-  PrivateSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow SSH from VPC only
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 10.0.0.0/16
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-private-sg-${StudentName}"
-
-  # Private EC2 Instance (no public IP)
-  PrivateEC2:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0c2b8ca1dad447f8a   # Amazon Linux 2 (us-east-1)
-      InstanceType: t2.micro
-      SubnetId: !Ref PrivateSubnet
-      SecurityGroupIds:
-        - !Ref PrivateSG
-      KeyName: !Ref KeyPairName
-      UserData:
-        Fn::Base64: |
-          #!/bin/bash
-          yum update -y
-          yum install -y httpd
-          systemctl enable httpd
-          systemctl start httpd
-          echo "<h1>Hello from Private Subnet via NAT (Task 9)</h1>" > /var/www/html/index.html
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-privatevm-${StudentName}"
-
+# ------------------------------
+# OUTPUTS
+# ------------------------------
 Outputs:
-  PrivateEC2ID:
-    Description: ID of EC2 in private subnet
-    Value: !Ref PrivateEC2
-  PrivateSubnetID:
-    Description: Private subnet ID
-    Value: !Ref PrivateSubnet
-  NATGatewayID:
-    Description: NAT Gateway ID
-    Value: !Ref NATGateway
+
+  PublicInstanceIP:
+    Description: Public IP of the EC2 instance
+    Value: !GetAtt PublicInstance.PublicIp
+
+  VPCID:
+    Description: VPC ID
+    Value: !Ref VPC
+
+  PublicSubnetID:
+    Description: Public Subnet ID
+    Value: !Ref PublicSubnet
