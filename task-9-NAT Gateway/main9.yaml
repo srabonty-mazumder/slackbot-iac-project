@@ -1,0 +1,260 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Combined Task 3 & Task 9 - VPC with Public & Private Subnets, NAT Gateway,
+  Bastion Host and Private EC2 (Student: srabonty)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: slackbot
+
+  StudentName:
+    Type: String
+    Default: srabonty
+
+  Environment:
+    Type: String
+    Default: sandbox
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: slackbot-key-srabonty
+    Description: Existing EC2 key pair to use for SSH access
+
+  BastionInstanceType:
+    Type: String
+    Default: t2.micro
+
+  PrivateInstanceType:
+    Type: String
+    Default: t2.micro
+
+  AL2023AmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+
+Resources:
+
+  # ------------------ VPC ------------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-vpc-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: "Task3-Task9"
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+  # ------------------ Subnets ------------------
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-${StudentName}"
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-${StudentName}"
+
+  # ------------------ Internet Gateway ------------------
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-igw-${StudentName}"
+
+  AttachIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # ------------------ Public Route Table ------------------
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-rt-${StudentName}"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachIGW
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # ------------------ NAT Gateway ------------------
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-natgw-${StudentName}"
+
+  # ------------------ Private Route Table ------------------
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-rt-${StudentName}"
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  # ------------------ Security Groups ------------------
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from internet to bastion
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 # you can restrict to your IP if required
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-bastion-sg-${StudentName}"
+
+  PrivateSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH only from bastion
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-sg-${StudentName}"
+
+  # ------------------ Bastion EC2 (Task 3 VM) ------------------
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AL2023AmiId
+      InstanceType: !Ref BastionInstanceType
+      KeyName: !Ref KeyPairName
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !Ref PublicSubnet
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref BastionSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-bastion-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task3
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+  # ------------------ Private EC2 (Task 9 VM) ------------------
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AL2023AmiId
+      InstanceType: !Ref PrivateInstanceType
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref PrivateSG
+      KeyName: !Ref KeyPairName
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl enable httpd
+          systemctl start httpd
+          echo "<h1>Installed from Private Subnet via NAT Gateway</h1>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-privatevm-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task9
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+Outputs:
+  BastionPublicIP:
+    Description: Public IP address of the bastion host (Task 3 VM)
+    Value: !GetAtt BastionInstance.PublicIp
+
+  PrivateInstanceId:
+    Description: EC2 ID of private (Task 9) instance
+    Value: !Ref PrivateInstance
+
+  PrivateSubnetId:
+    Description: Private subnet ID
+    Value: !Ref PrivateSubnet
+
+  NatGatewayId:
+    Description: NAT Gateway ID
+    Value: !Ref NatGateway
