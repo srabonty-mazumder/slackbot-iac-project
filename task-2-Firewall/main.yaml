@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Task 2 - Firewall for Slack Chatbot (Project: slackbot, Student: srabonty)
+  Networking security groups for Slack bot deployment environment.
+Parameters:
+  ProjectName:
+    Type: String
+    Default: slackbot
+  StudentName:
+    Type: String
+    Default: srabonty
+  Environment:
+    Type: String
+    Default: sandbox
+
+Resources:
+  # Virtual Private Cloud
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-t1-vpc-${StudentName}"
+        - Key: Course
+          Value: CloudTraining
+        - Key: Implementation
+          Value: IaC
+        - Key: Task
+          Value: Task2
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: DeploymentType
+          Value: !Ref Environment
+
+  # Public Subnets
+  PublicSubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-az1-${StudentName}"
+
+  PublicSubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-az2-${StudentName}"
+
+  # Private Subnets
+  PrivateSubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-az1-${StudentName}"
+
+  PrivateSubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-az2-${StudentName}"
+
+  # Security Group for Public Subnets (allow Internet traffic)
+  PublicSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public Firewall for Slackbot
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-sg-${StudentName}"
+
+  # Security Group for Private Subnets (allow ONLY from Public SG)
+  PrivateSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Private Firewall for Slackbot
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref PublicSG
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref PublicSG
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref PublicSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-sg-${StudentName}"
+
+Outputs:
+  VPCID:
+    Value: !Ref VPC
+  PublicSecurityGroup:
+    Value: !Ref PublicSG
+  PrivateSecurityGroup:
+    Value: !Ref PrivateSG
