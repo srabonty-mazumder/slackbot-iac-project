@@ -39,25 +39,25 @@ This chapter estimates the major costs associated with deploying and maintaining
 
 ### Architecture Annotations (DNS, IP, TLS, Ports & Critical Details): 
 
-1.	DNS Details:
+#### 1.	DNS Details:
 •	DNS Service: Amazon Route 53
 •	Domain Name: chatbot.example.com
 •	Record Type: A (ALIAS)
 •	Target: Amazon API Gateway (Regional Endpoint)
 •	Purpose: Resolves Slack callback URL to API Gateway
-2.	IP Addressing
+#### 2.	IP Addressing
 •	Public IPs: Managed by AWS (API Gateway)
 •	Static IPs: Not required
 •	VPC / Private IPs: Not used (serverless, no VPC)
 •	Slack Source IPs: Public, managed by Slack
-3.	Network Protocols & Ports
+#### 3.	Network Protocols & Ports
 •	Protocol: HTTPS
 •	Port: 443
 •	Direction: 
 Slack → API Gateway (Inbound)
 API Gateway → Slack (Outbound)
        All external communication occurs over HTTPS only.
-4.	TLS / Encryption
+#### 4.	TLS / Encryption
 •	Transport Encryption: TLS 1.2+
 •	TLS Termination: Amazon API Gateway
 •	Certificate: AWS-managed certificate
@@ -65,13 +65,13 @@ API Gateway → Slack (Outbound)
 •	Encryption at Rest:
 DynamoDB: AWS KMS (managed)
 Secrets Manager: AWS KMS (managed)
-5.	Authentication & Request Validation
+#### 5.	Authentication & Request Validation
 •	Slack Request Verification:
 Slack Signing Secret validation
 Timestamp validation to prevent replay attacks
 •	Credential Storage: AWS Secrets Manager
 •	Access Control: IAM roles with least-privilege permissions
-6.	Application & Integration Details
+#### 6.	Application & Integration Details
 •	Event Source: Slack Events API
 •	Integration Endpoint: Amazon API Gateway
 •	Compute Service: AWS Lambda (stateless, event-driven)
@@ -79,7 +79,7 @@ Timestamp validation to prevent replay attacks
 •	Object Storage: Amazon S3 (optional)
 •	Monitoring: Amazon CloudWatch logs and metrics
 •	Scheduled Events (Optional): Amazon EventBridge
-7.	Availability & Scaling
+#### 7.	Availability & Scaling
 •	Availability: Multi-AZ by default (managed services)
 •	Scaling: Automatic (Lambda, API Gateway, DynamoDB)
 •	Failover: Handled by AWS managed services
